@@ -3,6 +3,6 @@ A sample of my R programming file.
 
 For more R codes, please also viist https://Rpubs.com/michellecaseyhsu. 
 
-Basic R codes can also be located under Advanced R folder/SCC/R-Shiny folder. 
+Basic R codes can also be located under Intermediate R folder/SCC/R-Shiny folder. 
 
 
