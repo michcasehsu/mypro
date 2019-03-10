@@ -13,6 +13,9 @@ knitr::opts_chunk$set(echo = TRUE)
 packages <- c("readxl", "tibble", "lubridate", "reshape2", "ggrepel", "car", "tidyverse", "dplyr", "ggplot2", "carData", "readr", "stringr")
 lapply(packages, library, character.only = TRUE)
 ```
+#```{r}
+#source('//      /Michelle/func2_file.R')
+#```
 
 #####################################################
 #     sub_nutri n =463 removed 2 outliers (std=3)   #
@@ -161,4 +164,14 @@ sapply(master, function(x) sum(is.na(x)))
 ```{r}
 master_copy<- master
 str(master_copy)
+```
+
+#####################################################
+#              Additional statistical tests         #
+#####################################################
+```{r}
+for (i in names(master[c(14:24)])){
+  print(names(master[i]))
+     (odds.mod(master[[i]]))
+}
 ```
