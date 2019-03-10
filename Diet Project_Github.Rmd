@@ -1,0 +1,164 @@
+---
+title: "Diet Project_Github"
+author: "Michelle C. Hsu"
+date: "March 10, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+packages <- c("readxl", "tibble", "lubridate", "reshape2", "ggrepel", "car", "tidyverse", "dplyr", "ggplot2", "carData", "readr", "stringr")
+lapply(packages, library, character.only = TRUE)
+```
+
+#####################################################
+#     sub_nutri n =463 removed 2 outliers (std=3)   #
+#####################################################
+```{r}
+sub_nutri <- nutri_dat[(!(nutri_dat$`DQ Calories`==5203.38) &
+                       !(nutri_dat$`DQ Calories`==7900.39)),] 
+  summary(sub_nutri$`DQ Calories`)
+  length(unique(sub_nutri$Code)) #463
+```
+#####################################################
+#              remove refdate and cal_age           # 
+#####################################################
+```{r}
+sub_nutri <- subset(sub_nutri, select = -c(refdate,Calc_Age) ) 
+sub_nutri$`Dem Years of Education` <- as.numeric(sub_nutri$`Dem Years of Education`)
+```
+#####################################################
+#   master (n =409) after removed 54 offspring-pair #
+#   drop refdate and Calc-Age;                      #
+#   reorder Diet ID                                 #
+#   reorder DQ calorie                              #
+#   reorder DQ ID                                   #
+#   sub_nutri includes 54-offspring from pair       #
+#####################################################
+```{r}
+grep("Diet ID", colnames(sub_nutri)) #92
+grep("DQ Calories", colnames(sub_nutri)) #212
+grep("DQ ID", colnames(sub_nutri)) #246
+grep("age_round", colnames(sub_nutri)) #305
+#314 vars total
+sub_nutri<- sub_nutri %>% select(Code:`Offspring Subtype`,`Diet ID`,`DQ Calories`, `DQ ID`,age_round, `Diet Beverage Beer`: `DQ Zn wo`)
+
+names(sub_nutri) 
+```
+######################################################
+#        master data has no 54 offspring pair        #
+#          master_copy is a copy of master           #
+#       (no transformation will be done in copy)     #
+######################################################
+```{r}
+str(spouse_pairs) #data.frame
+CODES_list <- spouse_pairs$Offspring #column CODES_list
+str(CODES_list)
+CODES_list_offspring <- as.list(CODES_list)
+master <- sub_nutri[ ! sub_nutri$Code %in% CODES_list, ]
+master_copy <- master
+```
+#################################################################
+#                                TABLE 1                        #
+#################################################################
+################################################
+#                       n                      #
+################################################
+```{r}
+print('Total number of participants')
+length(master$Code)
+```
+```{r}
+print('Participants by offspring type')
+table(master$`Offspring Type`) #280 offspring #129 control
+```
+################################################
+#                     Age                      #
+################################################
+```{r}
+print('mean age')
+mean(master$age_round)
+print('offspring type mean')
+tapply(master$age_round,master$`Offspring Type`, mean)
+print('offspring type standard deviation')
+tapply(master$age_round,master$`Offspring Type`,  sd)
+```
+```{r}
+boxplot(master$age_round ~ master$`Offspring Type`)
+t.test(master$age_round ~ master$`Offspring Type`, mu = 0, alt = "two.sided", paired= F, var.equal = T) #0.491
+```
+################################################
+#                 Calories                     #
+################################################
+```{r}
+print('Caloric intake mean')
+tapply(master$`DQ Calories`,master$`Offspring Type`, mean)
+print('Caloric intake standard deviation')
+tapply(master$`DQ Calories`,master$`Offspring Type`, sd)
+```
+```{r}
+boxplot(master$`DQ Calories` ~ master$`Offspring Type`)
+t.test(master$`DQ Calories` ~ master$`Offspring Type`, mu = 0, alt = "two.sided", paired= F, var.equal = T) 
+
+hist(master$`DQ Calories`,breaks = "FD", xlab= "kcal/d", main= "Histogram of Calories")
+```
+################################################
+#                  female                      #
+################################################
+```{r}
+master %>%
+  group_by(`Offspring Type`, `Dem Sex`) %>%
+  summarise(n= n()) %>%
+  mutate(freq = n/ sum(n))
+```
+
+
+```{r}
+with(master, do.call(rbind, tapply(master$age_round, master$`Offspring Type`,function(x) c(M = mean(x), SD = sd(x)))))
+```
+```{r}
+with(master, do.call(rbind, tapply(master$`DQ Calories`, master$`Offspring Type`,function(x) c(M = mean(x), SD = sd(x)))))
+```
+
+#################################################################
+#                         remove var                            #
+#################################################################
+```{r}
+master <-select(master, -c(`DQ Sach`))
+```
+
+#################################################################
+#           master dataset select columns - diet                #
+#                master with 201 variables                      #
+#################################################################
+```{r}
+master <- master%>% select(Code:`Diet Veg Yams`) # var 163
+names(master)
+```
+#####################################################
+#      Replace 10 as NA (P on questionairre)        #
+#####################################################
+```{r}
+master[,14:163][master[, 14:163] ==10] <- NA  
+```
+
+#####################################################
+#            Fat categories are of concern          #
+#####################################################
+```{r}
+master <-select(master, -c(`Diet Fat Added Sugar`:`Diet Fat Marg Tub`))
+dim(master) #409 140 var 
+
+sapply(master, function(x) sum(is.na(x)))
+```
+
+#####################################################
+#                     Copy dataset                  #
+#####################################################
+```{r}
+master_copy<- master
+str(master_copy)
+```
